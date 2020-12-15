@@ -44,12 +44,12 @@ object Kakalot {
     *   ~url~/chapter_3 -> Download pictures of chapter(url = ~url~/chapter_3) to folder(path = ~path~/~manga-name~/)
     */
     fun downloadChapter(url: String, path: String, newFolder: Boolean = false) {
-        url.mangaName().let { manga ->
+        (url.mangaName() to url.chapterIndex()).let { (manga, chapter) ->
             downloadChapterUrls(url)
                 .forEachIndexed { index, element ->
-                    val directPath =
-                        File("$path/${if (newFolder) "$manga-chapter${url.chapterIndex()}" else ""}").apply { mkdirs() }.absolutePath
-                    File("$directPath/${index + 1}.jpg")
+                    File("$path/${"$manga-chapter$chapter/".takeIf { newFolder } ?: ""}")
+                        .apply { mkdirs() }
+                        .path("${index + 1}.jpg")
                         .writeBytes(
                             Jsoup.connect(element)
                                 .header("referer", "https://mangakakalot.com/")
@@ -80,7 +80,7 @@ object Kakalot {
     fun downloadManga(url: String, path: String, newFolder: Boolean = false) {
         url.mangaName().let { manga ->
             chaptersUrls(url).forEach { chapter ->
-                downloadChapter(chapter, "$path/${if (newFolder) "$manga/" else ""}${chapter.chapterIndex()}")
+                downloadChapter(chapter, "$path/${"$manga/".takeIf { newFolder } ?: ""}${chapter.chapterIndex()}")
             }
         }
     }
@@ -123,3 +123,5 @@ object Kakalot {
     */
     fun formChapterUrl(name: String, chapter: String): String = "$BASE_KAKALOT_URL/$name/$chapter"
 }
+
+internal fun File.path(next: String) = File("$absolutePath/$next")
