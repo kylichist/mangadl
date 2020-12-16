@@ -1,1 +1,2 @@
-rootProject.name = "mangakakalot-kt"
+rootProject.name = "mangadl"
+include("mangakakalot", "common")

@@ -2,13 +2,17 @@ plugins {
     kotlin("jvm") version "1.4.21"
 }
 
-group = "com.github.kylichist"
-version = "1.0-SNAPSHOT"
-
-repositories {
-    mavenCentral()
+buildscript {
+    repositories {
+        mavenCentral()
+    }
 }
 
-dependencies {
-    implementation("org.jsoup:jsoup:1.13.1")
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+
+    group = "com.github.kylichist"
+    version = "1.0-SNAPSHOT"
 }

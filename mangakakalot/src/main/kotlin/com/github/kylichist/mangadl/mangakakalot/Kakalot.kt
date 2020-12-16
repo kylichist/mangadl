@@ -1,4 +1,4 @@
-package com.github.kylichist.mangakakalotkt
+package com.github.kylichist.mangadl.mangakakalot
 
 import org.jsoup.Jsoup
 import java.io.File
