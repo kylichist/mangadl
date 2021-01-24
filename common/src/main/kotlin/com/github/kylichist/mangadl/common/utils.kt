@@ -6,3 +6,7 @@ import java.io.File
 
 inline fun File.path(next: String): File = File("$absolutePath/$next")
 inline fun fileOf(path: String): File = File(path).apply { mkdirs() }
+
+inline fun String.ifTrue(condition: Boolean): String = if (condition) this else ""
+
+inline fun <A> Iterable<A>.filterWithContext(predicate: Iterable<A>.(A) -> Boolean): Iterable<A> = filter { predicate(it) }

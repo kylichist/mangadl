@@ -1,102 +1,125 @@
 package com.github.kylichist.mangadl.mangakakalot
 
-import com.github.kylichist.mangadl.common.path
+import com.github.kylichist.mangadl.common.*
 import org.jsoup.Jsoup
-import java.io.File
 
-object MangaKakalot {
-    const val BASE_KAKALOT_URL = "https://mangakakalot.com/chapter/"
+object MangaKakalot : Client {
 
-    fun chapters(url: String): List<String> {
+    override val BASE_URL = "https://mangakakalot.com"
+
+    override fun scrapper(url: String): Scrapper {
+        return Scrapper(url, MangaKakalotWorker)
+    }
+
+    override fun worker(): Worker {
+        return MangaKakalotWorker
+    }
+
+    override fun chapterUrlOf(source: String, index: String): String {
+        return chapterSchemeOf(source) + index
+    }
+
+    override fun chapterSchemeOf(source: String): String {
+        return source.substring(0, source.indexOfLast { it == '_' } + 1)
+    }
+
+    override fun mangaNameOf(source: String): String {
+        return source.substringAfter("chapter/").substringBefore("/chapter")
+    }
+
+    override fun chapterIndexOf(source: String): String {
+        return source.substringAfterLast("_")
+    }
+
+    override fun chapterIndexOfDownloadUrl(source: String): String {
+        return chapterIndexOf(source).substringBefore("/")
+    }
+
+    override fun formChapterUrl(name: String, chapter: String): String = "$BASE_URL/chapter/$name/chapter_$chapter"
+}
+
+private object MangaKakalotWorker : Worker {
+
+    override suspend fun chaptersIndexes(url: String): List<String> {
         return Jsoup.connect(url)
             .get()
-            .select("div.option_wrap select option")
+            .selectFirst("div.option_wrap select")
+            .select("option")
             .map { it.attr("data-c") }
             .asReversed()
     }
 
-    fun chaptersWithTitles(url: String): List<Pair<String, String>> {
+    override suspend fun chaptersTitles(url: String): List<String> {
         return Jsoup.connect(url)
             .get()
-            .select("div.option_wrap select option")
-            .map { it.attr("data-c") to it.html() }
+            .selectFirst("div.option_wrap select")
+            .select("option")
+            .map { it.html() }
             .asReversed()
     }
 
-    fun chaptersUrls(url: String): List<String> {
-        return chapters(url).map {
-            url.chapterScheme() + it
+    override suspend fun chaptersUrls(url: String): List<String> {
+        return chaptersIndexes(url).map {
+            MangaKakalot.chapterSchemeOf(url) + it
         }
     }
 
-    fun downloadChapter(url: String, path: String, newFolder: Boolean = false) {
-        (url.mangaName() to url.chapterIndex()).let { (manga, chapter) ->
-            downloadChapterUrls(url)
-                .forEachIndexed { index, element ->
-                    File("$path/${"$manga-chapter$chapter/".takeIf { newFolder } ?: ""}")
-                        .apply { mkdirs() }
-                        .path("${index + 1}.jpg")
-                        .writeBytes(
-                            Jsoup.connect(element)
-                                .header("referer", "https://mangakakalot.com/")
-                                .ignoreContentType(true)
-                                .execute()
-                                .bodyAsBytes()
-                        )
-                }
-        }
-    }
-
-    fun downloadChapterRange(url: String, path: String, from: String, to: String, newFolder: Boolean = false) {
-        //TODO
-        (url.mangaName() to url.chapterIndex()).let { (manga, chapter) ->
-            downloadChapterUrls(url).apply {
-                filter { current ->
-                    indexOf(current) in indexOf(from)..indexOf(to)
-                }
-            }.forEachIndexed { index, element ->
-                    File("$path/${"$manga-chapter$chapter/".takeIf { newFolder } ?: ""}")
-                        .apply { mkdirs() }
-                        .path("${index + 1}.jpg")
-                        .writeBytes(
-                            Jsoup.connect(element)
-                                .header("referer", "https://mangakakalot.com/")
-                                .ignoreContentType(true)
-                                .execute()
-                                .bodyAsBytes()
-                        )
-                }
-        }
-    }
-
-    fun downloadChapterUrls(url: String): List<String> {
+    override suspend fun chaptersTitlesIndexed(url: String): Map<String, String> {
         return Jsoup.connect(url)
             .get()
-            .select("div#vungdoc img")
-            .toList().map { it.attr("src") }
+            .selectFirst("div.option_wrap select")
+            .select("option")
+            .map { it.attr("data-c") to it.html() }
+            .asReversed()
+            .toMap()
     }
 
-    fun downloadManga(url: String, path: String, newFolder: Boolean = false) {
-        url.mangaName().let { manga ->
-            chaptersUrls(url).forEach { chapter ->
-                downloadChapter(chapter, "$path/${"$manga/".takeIf { newFolder } ?: ""}${chapter.chapterIndex()}")
+    override suspend fun chapterDownloadUrls(url: String): List<String> {
+        return Jsoup.connect(url)
+            .get()
+            .select("div.container-chapter-reader img")
+            .map { it.attr("src") }
+            .toList()
+    }
+
+    override suspend fun mangaDownloadUrls(url: String): Map<String, List<String>> {
+        return chaptersUrls(url).associateWith {
+            chapterDownloadUrls(MangaKakalot.chapterUrlOf(url, it))
+        }
+    }
+
+    override suspend fun downloadChapter(url: String, path: String, newFolder: Boolean) {
+        val chapter: String = MangaKakalot.chapterIndexOf(url)
+        chapterDownloadUrls(url).forEachIndexed { index, element ->
+                fileOf("$path/${"$chapter/".ifTrue(newFolder)}")
+                    .path("${index + 1}.jpg")
+                    .writeBytes(
+                        Jsoup.connect(element)
+                            .header("referer", "https://mangakakalot.com/")
+                            .ignoreContentType(true)
+                            .execute()
+                            .bodyAsBytes()
+                    )
             }
+    }
+
+    override suspend fun downloadChapterRange(url: String, path: String, from: String, to: String, newFolder: Boolean) {
+        val manga: String = MangaKakalot.mangaNameOf(url)
+        chaptersIndexes(url).filterWithContext {
+            indexOf(it) in indexOf(from)..indexOf(to)
+        }.map {
+            MangaKakalot.formChapterUrl(manga, it)
+        }.forEach {
+            downloadChapter(it, "$path/${manga.ifTrue(newFolder)}", true)
         }
     }
 
-    fun downloadMangaUrls(url: String): Map<String, List<String>> {
-        return chapters(url).associateWith {
-            downloadChapterUrls(url.chapterUrl(it))
+    override suspend fun downloadManga(url: String, path: String, newFolder: Boolean) {
+        val manga = MangaKakalot.mangaNameOf(url)
+        chaptersUrls(url).forEach { chapter ->
+           // val chapterIndex = MangaKakalot.chapterIndexOf(chapter)
+            downloadChapter(chapter,
+                "$path/${manga.ifTrue(newFolder)}", true)
         }
     }
-
-    fun String.chapterUrl(index: String) = chapterScheme() + index
-
-    fun String.chapterScheme() = substring(0, indexOfLast { it == '_' } + 1)
-
-    fun String.mangaName() = substringAfter("chapter/").substringBefore("/chapter")
-
-    fun String.chapterIndex() = substringAfterLast("_")
-
-    fun formChapterUrl(name: String, chapter: String): String = "$BASE_KAKALOT_URL/$name/$chapter"
 }
