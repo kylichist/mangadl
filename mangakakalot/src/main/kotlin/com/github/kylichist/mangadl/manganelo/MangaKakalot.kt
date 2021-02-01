@@ -1,4 +1,4 @@
-package com.github.kylichist.mangadl.mangakakalot
+package com.github.kylichist.mangadl.manganelo
 
 import com.github.kylichist.mangadl.common.*
 import org.jsoup.Jsoup
@@ -8,11 +8,22 @@ object MangaKakalot : Client {
     override val BASE_URL = "https://mangakakalot.com"
 
     override fun scrapper(url: String): Scrapper {
-        return Scrapper(url, MangaKakalotWorker)
+        return Scrapper(url, MangaKakalotScrapper)
     }
 
-    override fun worker(): Worker {
-        return MangaKakalotWorker
+    override fun worker(): AbstractScrapper {
+        return MangaKakalotScrapper
+    }
+
+    override suspend fun search(keyword: String): List<Scrapper> {
+        /*Jsoup.connect("https://mangakakalot.com/read-is4cb158504873448")
+            .get()
+            .select("div.chapter-list div")
+            .last()
+            .select("span a")
+            .attr("href")*/
+
+        return TODO()
     }
 
     override fun chapterUrlOf(source: String, index: String): String {
@@ -38,7 +49,7 @@ object MangaKakalot : Client {
     override fun formChapterUrl(name: String, chapter: String): String = "$BASE_URL/chapter/$name/chapter_$chapter"
 }
 
-private object MangaKakalotWorker : Worker {
+private object MangaKakalotScrapper : AbstractScrapper {
 
     override suspend fun chaptersIndexes(url: String): List<String> {
         return Jsoup.connect(url)
@@ -117,7 +128,6 @@ private object MangaKakalotWorker : Worker {
     override suspend fun downloadManga(url: String, path: String, newFolder: Boolean) {
         val manga = MangaKakalot.mangaNameOf(url)
         chaptersUrls(url).forEach { chapter ->
-           // val chapterIndex = MangaKakalot.chapterIndexOf(chapter)
             downloadChapter(chapter,
                 "$path/${manga.ifTrue(newFolder)}", true)
         }
