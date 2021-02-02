@@ -8,12 +8,10 @@ object MangaKakalot : Client {
     override val BASE_URL = "https://mangakakalot.com"
 
     override fun scrapper(url: String): Scrapper {
-        return Scrapper(url, MangaKakalotScrapper)
+        return Scrapper(url, MangaKakalotWorker)
     }
 
-    override fun worker(): AbstractScrapper {
-        return MangaKakalotScrapper
-    }
+    override val worker: Worker = MangaKakalotWorker
 
     override suspend fun search(keyword: String): List<Scrapper> {
         /*Jsoup.connect("https://mangakakalot.com/read-is4cb158504873448")
@@ -49,7 +47,7 @@ object MangaKakalot : Client {
     override fun formChapterUrl(name: String, chapter: String): String = "$BASE_URL/chapter/$name/chapter_$chapter"
 }
 
-private object MangaKakalotScrapper : AbstractScrapper {
+private object MangaKakalotWorker : Worker {
 
     override suspend fun chaptersIndexes(url: String): List<String> {
         return Jsoup.connect(url)

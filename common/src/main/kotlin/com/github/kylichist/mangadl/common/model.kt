@@ -1,7 +1,7 @@
 package com.github.kylichist.mangadl.common
 
 //TODO: update "docs"
-interface AbstractScrapper {
+interface Worker {
     //working with chapters' info
     /*
     *   ~url~/chapter_1 -> [1, 2, 3, .. , ~last-chapter-of-manga~]
@@ -53,16 +53,16 @@ interface AbstractScrapper {
     suspend fun downloadManga(url: String, path: String, newFolder: Boolean)
 }
 
-class Scrapper(private val url: String, private val scrapper: AbstractScrapper) {
-    suspend fun chaptersIndexes(): List<String> = scrapper.chaptersIndexes(url)
-    suspend fun chaptersTitles(): List<String> = scrapper.chaptersTitles(url)
-    suspend fun chaptersUrls(): List<String> = scrapper.chaptersUrls(url)
-    suspend fun chaptersTitlesIndexed(): Map<String, String> = scrapper.chaptersTitlesIndexed(url)
-    suspend fun chapterDownloadUrls(): List<String> = scrapper.chapterDownloadUrls(url)
-    suspend fun mangaDownloadUrls(): Map<String, List<String>> = scrapper.mangaDownloadUrls(url)
-    suspend fun downloadChapter(path: String, newFolder: Boolean = false) = scrapper.downloadChapter(url, path, newFolder)
-    suspend fun downloadChapterRange(path: String, from: String, to: String, newFolder: Boolean = false) = scrapper.downloadChapterRange(url, path, from, to, newFolder)
-    suspend fun downloadManga(path: String, newFolder: Boolean = false) = scrapper.downloadManga(url, path, newFolder)
+class Scrapper(private val url: String, private val worker: Worker) {
+    suspend fun chaptersIndexes(): List<String> = worker.chaptersIndexes(url)
+    suspend fun chaptersTitles(): List<String> = worker.chaptersTitles(url)
+    suspend fun chaptersUrls(): List<String> = worker.chaptersUrls(url)
+    suspend fun chaptersTitlesIndexed(): Map<String, String> = worker.chaptersTitlesIndexed(url)
+    suspend fun chapterDownloadUrls(): List<String> = worker.chapterDownloadUrls(url)
+    suspend fun mangaDownloadUrls(): Map<String, List<String>> = worker.mangaDownloadUrls(url)
+    suspend fun downloadChapter(path: String, newFolder: Boolean = false) = worker.downloadChapter(url, path, newFolder)
+    suspend fun downloadChapterRange(path: String, from: String, to: String, newFolder: Boolean = false) = worker.downloadChapterRange(url, path, from, to, newFolder)
+    suspend fun downloadManga(path: String, newFolder: Boolean = false) = worker.downloadManga(url, path, newFolder)
 }
 
 interface Client {
@@ -71,6 +71,7 @@ interface Client {
     * TODO!!
      */
     val BASE_URL: String
+    val worker: Worker
 
     /*
     * TODO!!
@@ -79,7 +80,6 @@ interface Client {
     /*
      * TODO!!
      */
-    fun worker(): AbstractScrapper
 
     /*
      * TODO!!
