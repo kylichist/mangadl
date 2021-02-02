@@ -6,4 +6,4 @@ suspend inline fun Scrapper.downloadChapter(file: File, newFolder: Boolean = fal
 suspend inline fun Scrapper.downloadChapterRange(file: File, from: String, to: String, newFolder: Boolean = false) = downloadChapterRange(file.absolutePath, from, to, newFolder)
 suspend inline fun Scrapper.downloadManga(file: File, newFolder: Boolean = false) = downloadManga(file.absolutePath, newFolder)
 
-inline fun Client.register(producer: () -> String): Scrapper = scrapper(producer())
+inline fun Client.scrapper(producer: () -> String): Scrapper = scrapper(producer())

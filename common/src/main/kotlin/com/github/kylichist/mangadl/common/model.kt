@@ -7,22 +7,32 @@ interface Worker {
     *   ~url~/chapter_1 -> [1, 2, 3, .. , ~last-chapter-of-manga~]
     */
     suspend fun chaptersIndexes(url: String): List<String>
+
     /*
     * TODO!!
      */
     suspend fun chaptersTitles(url: String): List<String>
+
     /*
     *   ~url~/chapter_1 -> [~url~/chapter_1, ~url~/chapter_2, ~url~/chapter_3, .. , ~url~/~last-chapter-of-manga~]
     */
     suspend fun chaptersUrls(url: String): List<String>
+
     /*
     *   ~url~/chapter_1 -> [1 to "Chapter 1: Move 1", 2 to "..", 3 to "..", .. , ~last-chapter-of-manga~ to ~last-title-of-manga~]
     */
     suspend fun chaptersTitlesIndexed(url: String): Map<String, String>
+
+    /*
+     * todo!
+     */
+    suspend fun chaptersUrlsIndexed(url: String): Map<String, String>
+
     /*
     *   ~url~/chapter_1 -> [~url-to-download-picture-1-of-chapter-1~, ..]
     */
     suspend fun chapterDownloadUrls(url: String): List<String>
+
     /*
     *   ~url~/chapter_1 -> {
     *       1 to [~url-to-download-picture-1-of-chapter-1~, ..]
@@ -40,10 +50,12 @@ interface Worker {
     *   ~url~/chapter_1 -> Download pictures of chapter(url = ~url~/chapter_1) to folder(path = ~path~/~manga-name~/)
     */
     suspend fun downloadChapter(url: String, path: String, newFolder: Boolean)
+
     /*
     * TODO!!
      */
     suspend fun downloadChapterRange(url: String, path: String, from: String, to: String, newFolder: Boolean)
+
     /*
     * If newFolder:
     *   ~url~/chapter_1 -> Download whole manga with all pictures to folder(path = ~path~/)
@@ -53,15 +65,18 @@ interface Worker {
     suspend fun downloadManga(url: String, path: String, newFolder: Boolean)
 }
 
-class Scrapper(private val url: String, private val worker: Worker) {
+class Scrapper(val url: String, val worker: Worker) {
     suspend fun chaptersIndexes(): List<String> = worker.chaptersIndexes(url)
     suspend fun chaptersTitles(): List<String> = worker.chaptersTitles(url)
     suspend fun chaptersUrls(): List<String> = worker.chaptersUrls(url)
     suspend fun chaptersTitlesIndexed(): Map<String, String> = worker.chaptersTitlesIndexed(url)
+    suspend fun chaptersUrlsIndexed(): Map<String, String> = worker.chaptersUrlsIndexed(url)
     suspend fun chapterDownloadUrls(): List<String> = worker.chapterDownloadUrls(url)
     suspend fun mangaDownloadUrls(): Map<String, List<String>> = worker.mangaDownloadUrls(url)
     suspend fun downloadChapter(path: String, newFolder: Boolean = false) = worker.downloadChapter(url, path, newFolder)
-    suspend fun downloadChapterRange(path: String, from: String, to: String, newFolder: Boolean = false) = worker.downloadChapterRange(url, path, from, to, newFolder)
+    suspend fun downloadChapterRange(path: String, from: String, to: String, newFolder: Boolean = false) =
+        worker.downloadChapterRange(url, path, from, to, newFolder)
+
     suspend fun downloadManga(path: String, newFolder: Boolean = false) = worker.downloadManga(url, path, newFolder)
 }
 
@@ -84,30 +99,28 @@ interface Client {
     /*
      * TODO!!
      */
-    suspend fun search(keyword: String): List<Scrapper>
+    suspend fun search(keyword: String): List<Manga>
 
     //extracting data
     /*
     *   ~url~/chapter_2, 1 -> ~url~/chapter_1
     */
     fun chapterUrlOf(source: String, index: String): String
+
     /*
     *   ~url~/chapter_1 -> ~url~/chapter_
     */
     fun chapterSchemeOf(source: String): String
+
     /*
     *   ~url~/~manga-name~/chapter_1 -> ~manga-name~
     */
     fun mangaNameOf(source: String): String
+
     /*
     *   ~url~/chapter_1 -> 1
     */
     fun chapterIndexOf(source: String): String
-
-    /*
-     *  TODO!!
-     */
-    fun chapterIndexOfDownloadUrl(source: String): String
 
     /*
     *   ps918650, 11 -> ~url~/chapter/ps918650/chapter_11
@@ -115,5 +128,11 @@ interface Client {
     fun formChapterUrl(name: String, chapter: String): String
 }
 
-//TODO
-data class Manga(val title: String, val picture: String)
+interface Manga {
+    val title: String
+    val pictureUrl: String
+    val author: String
+    val lastChapter: String
+    val id: String
+    fun scrapper(): Scrapper
+}

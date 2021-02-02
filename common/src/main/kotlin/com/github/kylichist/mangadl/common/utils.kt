@@ -10,3 +10,5 @@ inline fun fileOf(path: String): File = File(path).apply { mkdirs() }
 inline fun String.ifTrue(condition: Boolean): String = if (condition) this else ""
 
 inline fun <A> Iterable<A>.filterWithContext(predicate: Iterable<A>.(A) -> Boolean): Iterable<A> = filter { predicate(it) }
+
+inline fun String.replaceRegex(regex: String, replacement: String): String = replace(Regex(regex), replacement)
