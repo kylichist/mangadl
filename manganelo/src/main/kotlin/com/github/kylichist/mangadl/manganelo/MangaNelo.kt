@@ -30,7 +30,7 @@ object MangaNelo : Client {
             .replaceRegex("^\\_+|\\_+\$", "")
 
         require(keywordFiltered.length > 2) {
-            "Keyword length must be > 2!"
+            "Keyword length must be at least 3!"
         }
 
         return JSONArray(
