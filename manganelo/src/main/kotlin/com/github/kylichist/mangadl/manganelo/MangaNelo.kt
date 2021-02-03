@@ -29,6 +29,10 @@ object MangaNelo : Client {
             .replaceRegex("[^0-9a-z\\s]", "")
             .replaceRegex("^\\_+|\\_+\$", "")
 
+        require(keywordFiltered.length > 2) {
+            "Keyword length must be > 2!"
+        }
+
         return JSONArray(
             Jsoup.connect("https://manganelo.com/getstorysearchjson")
                 .data("searchword", keywordFiltered)
@@ -166,7 +170,7 @@ class MangaNeloManga(
     override val lastChapter: String,
     override val id: String
 ) : Manga {
-    override fun scrapper(): Scrapper {
-        return MangaNelo.scrapper(MangaNelo.formChapterUrl(id, "1"))
+    override fun scrapper(chapter: String): Scrapper {
+        return MangaNelo.scrapper(MangaNelo.formChapterUrl(id, chapter))
     }
 }

@@ -134,5 +134,5 @@ interface Manga {
     val author: String
     val lastChapter: String
     val id: String
-    fun scrapper(): Scrapper
+    fun scrapper(chapter: String = "1"): Scrapper
 }

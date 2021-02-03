@@ -11,7 +11,7 @@ sourceSets {
     }
 }
 
-val mangakakalotJar = task("mangakakalotJar", type = Jar::class) {
+/*val mangakakalotJar = task("mangakakalotJar", type = Jar::class) {
     group = "application"
     archiveBaseName.set("${project.name}-fat")
     manifest {
@@ -21,7 +21,7 @@ val mangakakalotJar = task("mangakakalotJar", type = Jar::class) {
     }
     from(configurations.runtime.get().map { if (it.isDirectory) it else zipTree(it) } )
     with(tasks["jar"] as CopySpec)
-}
+}*/
 
 /*
 tasks {
